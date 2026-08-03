@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Veilcast — Prediction Markets on Avalanche",
+  title: "Hypa — Prediction Markets on Avalanche",
   description: "Bet on the future. Powered by Avalanche.",
 };
 

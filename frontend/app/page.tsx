@@ -46,7 +46,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-7">
             <Link href="/" className="text-base font-semibold tracking-tight">
-              Veil<span className="text-avax">cast</span>
+              Hy<span className="text-avax">pa</span>
             </Link>
             <nav className="hidden sm:flex gap-5 text-xs">
               <span className="text-foreground">Markets</span>

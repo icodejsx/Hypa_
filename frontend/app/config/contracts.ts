@@ -1,4 +1,4 @@
-// Auto-generated contract config for Veilcast
+// Auto-generated contract config for Hypa
 export const FACTORY_ADDRESS = '0x023B2A098e093372413BF7020deBA06391e8Cf23' as const;
 
 export const FACTORY_ABI = [

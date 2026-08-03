@@ -53,7 +53,7 @@ export default function CreatePage() {
     <main style={{ minHeight: "100vh", background: "#0a0a0a", color: "white" }}>
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 32px", borderBottom: "1px solid #1a1a1a" }}>
         <Link href="/" style={{ fontSize: "22px", fontWeight: 600, textDecoration: "none", color: "white" }}>
-          Veil<span style={{ color: "#E84142" }}>cast</span>
+          Hy<span style={{ color: "#E84142" }}>pa</span>
         </Link>
         <ConnectWallet />
       </header>

@@ -57,7 +57,7 @@ export default function MarketPage({
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/" className="text-base font-semibold tracking-tight">
-              Veil<span className="text-avax">cast</span>
+              Hy<span className="text-avax">pa</span>
             </Link>
             <div className="text-xs text-muted">
               <Link href="/" className="hover:text-dim transition-colors">

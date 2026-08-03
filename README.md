@@ -1,10 +1,10 @@
-# Veilcast
+# Hypa
 
 **Prediction markets, settled on-chain. Built natively for Avalanche.**
 
-Veilcast is a binary prediction market where anyone can trade on the outcome of real-world events. Positions are held by the contract, odds are derived from pool weights, and settlement happens on-chain — no custodian, no off-chain ledger.
+Hypa is a binary prediction market where anyone can trade on the outcome of real-world events. Positions are held by the contract, odds are derived from pool weights, and settlement happens on-chain — no custodian, no off-chain ledger.
 
-🔗 **Live app:** https://veilcast-9rp3.vercel.app
+🔗 **Live app:** https://hypa-9rp3.vercel.app
 📄 **Factory contract (verified):** [`0x023B2A09…8Cf23`](https://testnet.snowtrace.io/address/0x023B2A098e093372413BF7020deBA06391e8Cf23#code)
 📄 **Market contract (verified):** [`0x6B6F9736…510b9`](https://testnet.snowtrace.io/address/0x6B6F97360655328E505a68D2b993b5c0a62510b9#code)
 🌐 **Network:** Avalanche Fuji (C-Chain, chainId 43113)
@@ -81,7 +81,7 @@ Next.js 16 (App Router) with wagmi and viem for chain interaction. Reads are fre
 
 The first version let anyone create markets. That's more decentralised on paper and worse in practice: a user could create a market, take the other side of every bet, and then resolve it in their own favour. Without an oracle or dispute mechanism, permissionless creation is an attack vector, not a feature.
 
-Polymarket curates every market through an internal team. Kalshi, as a CFTC-regulated exchange, requires regulatory approval per market. Veilcast follows the same pattern for the same reason. `createMarket` reverts for any caller other than the factory admin, and the UI hides the creation flow entirely unless the connected wallet matches the on-chain admin address.
+Polymarket curates every market through an internal team. Kalshi, as a CFTC-regulated exchange, requires regulatory approval per market. Hypa follows the same pattern for the same reason. `createMarket` reverts for any caller other than the factory admin, and the UI hides the creation flow entirely unless the connected wallet matches the on-chain admin address.
 
 The roadmap below describes how this opens up once resolution is trustless.
 
@@ -101,7 +101,7 @@ A production version would persist these events to a database with a listener ra
 
 ```bash
 git clone <repo-url>
-cd Veilcast
+cd Hypa
 npm install
 
 # Contracts
@@ -133,7 +133,7 @@ Testnet AVAX: https://faucet.avax.network
 
 Stated plainly, because they're the honest scope of an MVP:
 
-**Resolution is centralised.** The market owner declares the outcome. There is no oracle, no dispute window, and no economic penalty for resolving dishonestly. This is the single largest gap between Veilcast and a trustless prediction market.
+**Resolution is centralised.** The market owner declares the outcome. There is no oracle, no dispute window, and no economic penalty for resolving dishonestly. This is the single largest gap between Hypa and a trustless prediction market.
 
 **Binary markets only.** Each market has exactly two outcomes. Multi-outcome markets — "who wins the World Cup" with eight candidates — require a different contract design.
 

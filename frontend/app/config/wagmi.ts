@@ -16,7 +16,7 @@ export const config = createConfig({
     walletConnect({
       projectId,
       metadata: {
-        name: "Veilcast",
+        name: "Hypa",
         description: "Prediction markets on Avalanche",
         url: "https://veilcast-9rp3.vercel.app",
         icons: [],
