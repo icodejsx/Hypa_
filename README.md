@@ -13,7 +13,7 @@ Hypa is a binary prediction market where anyone can trade on the outcome of real
 
 ## What works today
 
-This is a functioning product, not a mockup. Every feature below is live on Fuji:
+This is a functioning product, not a mockup. Every feature below is live on Fuji::
 
 - **15 markets** across crypto, sports, politics, and tech
 - **Real trading** — bets are AVAX transfers into the market contract
