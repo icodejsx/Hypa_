@@ -8,9 +8,19 @@ import { Ticker } from "@/app/components/Ticker";
 import { FeaturedMarket } from "@/app/components/FeaturedMarket";
 import { MarketRow } from "@/app/components/MarketRow";
 import { useMarkets } from "@/app/hooks/useMarkets";
+import { inferCategory } from "@/app/lib/category";
 import { MarketCard } from "./components/MarketCard";
 
-const FILTERS = ["All", "Crypto", "Sports", "Resolved"];
+const FILTERS = [
+  "All",
+  "Crypto",
+  "Finance",
+  "Sports",
+  "Politics",
+  "Technology",
+  "Pop Culture",
+  "Resolved",
+];
 
 export default function Home() {
   const { markets, isLoading } = useMarkets();
@@ -34,7 +44,11 @@ export default function Home() {
   const filtered =
     filter === "Resolved"
       ? rest.filter((m) => m.resolved)
-      : rest.filter((m) => !m.resolved);
+      : filter === "All"
+      ? rest.filter((m) => !m.resolved)
+      : rest.filter(
+          (m) => !m.resolved && inferCategory(m.question) === filter
+        );
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -105,20 +119,22 @@ export default function Home() {
 
           {/* ─── Filters ─── */}
           <div className="max-w-6xl mx-auto px-6 pt-6 pb-2 flex items-center gap-4">
-            {FILTERS.map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`text-xs pb-1 transition-colors ${
-                  filter === f
-                    ? "text-foreground border-b border-avax"
-                    : "text-muted hover:text-dim"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-            <span className="ml-auto font-mono-nums text-[10px] text-muted tracking-wide">
+            <div className="flex items-center gap-4 overflow-x-auto">
+              {FILTERS.map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`text-xs pb-1 whitespace-nowrap transition-colors ${
+                    filter === f
+                      ? "text-foreground border-b border-avax"
+                      : "text-muted hover:text-dim"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+            <span className="ml-auto font-mono-nums text-[10px] text-muted tracking-wide whitespace-nowrap">
               {markets.length} MARKETS
             </span>
           </div>
@@ -131,8 +147,14 @@ export default function Home() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filtered.map((market) => (
-                  <MarketCard key={market.address} market={market} />
+                {filtered.map((market, i) => (
+                  <div
+                    key={market.address}
+                    className="animate-fade-in-up"
+                    style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
+                  >
+                    <MarketCard market={market} />
+                  </div>
                 ))}
               </div>
             )}

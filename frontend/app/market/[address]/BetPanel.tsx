@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { parseEther, formatEther } from "viem";
 import { ConnectWallet } from "@/app/components/ConnectWallet";
@@ -24,7 +25,11 @@ export function BetPanel({
   onBetPlaced: () => void;
 }) {
   const { isConnected, address } = useAccount();
-  const [side, setSide] = useState<"yes" | "no">("yes");
+  // Market cards link here with ?side=yes|no so the pick carries over from the grid
+  const searchParams = useSearchParams();
+  const [side, setSide] = useState<"yes" | "no">(
+    searchParams.get("side") === "no" ? "no" : "yes"
+  );
   const [amount, setAmount] = useState("0.10");
 
   const { writeContract, data: hash, isPending, error } = useWriteContract();

@@ -2,77 +2,152 @@
 
 import Link from "next/link";
 import { Sparkline } from "./Sparkline";
+import { MarketThumb } from "./MarketThumb";
 
 import type { MarketData } from "@/app/hooks/useMarkets";
-import { getYesPercent, getVolume, formatEndTime } from "@/app/lib/odds";
-import { inferCategory } from "@/app/lib/category";
+import {
+  getYesPercent,
+  getVolume,
+  formatEndTime,
+  formatTimeLeft,
+  formatCompactVolume,
+  shortAddress,
+} from "@/app/lib/odds";
+import { inferCategory, CATEGORY_STYLES } from "@/app/lib/category";
 
 export function MarketCard({ market }: { market: MarketData }) {
   const yesPercent = getYesPercent(market.totalYes, market.totalNo);
   const noPercent = 100 - yesPercent;
   const volume = getVolume(market.totalYes, market.totalNo);
 
-  // eslint-disable-next-line react-hooks/puritynn
+  // eslint-disable-next-line react-hooks/purity
   const nowSec = BigInt(Math.floor(Date.now() / 1000));
   const ended = market.endTime <= nowSec;
   const category = inferCategory(market.question);
 
+  const closingSoon =
+    !ended && !market.resolved && market.endTime - nowSec < 86400n;
+
   return (
-    <Link href={`/market/${market.address}`} className="block group h-full">
-      <div
-        className={`
-          bg-surface border border-border-subtle rounded-xl p-4 h-full flex flex-col
-          transition-all duration-200 hover:border-border-strong
-          ${market.resolved ? "opacity-60" : ""}
-        `}
-      >
-        <div className="font-mono-nums text-[9px] text-muted mb-2 tracking-wide">
-          {category.toUpperCase()}
-        </div>
+    <div
+      className={`
+        group relative bg-surface border border-border-subtle rounded-xl
+        h-full flex flex-col overflow-hidden
+        transition-all duration-200
+        hover:border-border-strong hover:bg-surface-hover
+        hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/40
+        ${market.resolved ? "opacity-70" : ""}
+      `}
+    >
+      {/* Probability bar pinned to the top edge, so the odds read at a glance */}
+      <div className="absolute inset-x-0 top-0 h-0.5 bg-no/25">
+        <div
+          className="h-full bg-yes transition-all duration-500"
+          style={{ width: `${yesPercent}%` }}
+        />
+      </div>
 
-        <div className="text-[13px] leading-snug text-foreground mb-3 min-h-[36px] group-hover:text-white transition-colors">
-          {market.question}
-        </div>
-
-        <div className="mb-2.5">
-          <Sparkline
-            marketAddress={market.address}
-            currentYesPercent={yesPercent}
-          /> 
-        </div>
-
-        <div className="flex items-baseline justify-between mb-2.5">
-          <span className="font-mono-nums text-xl text-yes leading-none">
-            {yesPercent}%
+      <div className="p-4 flex flex-col h-full">
+        {/* ─── Meta row: topic, status, deadline ─── */}
+        <div className="flex items-center gap-2 mb-3">
+          <span
+            className={`text-[9px] font-medium tracking-wide uppercase px-1.5 py-0.5 rounded border ${CATEGORY_STYLES[category]}`}
+          >
+            {category}
           </span>
-          <span className="font-mono-nums text-[9px] text-muted">
-            {volume} AVAX
+
+          {market.resolved ? (
+            <span className="font-mono-nums text-[9px] uppercase tracking-wide text-muted">
+              Settled
+            </span>
+          ) : closingSoon ? (
+            <span className="flex items-center gap-1 font-mono-nums text-[9px] uppercase tracking-wide text-avax">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-avax opacity-75 animate-ping" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-avax" />
+              </span>
+              Closing soon
+            </span>
+          ) : null}
+
+          <span className="ml-auto font-mono-nums text-[9px] text-muted whitespace-nowrap">
+            {market.resolved
+              ? formatEndTime(market.endTime)
+              : formatTimeLeft(market.endTime, nowSec)}
           </span>
         </div>
 
+        {/* ─── Thumbnail + question ─── */}
+        <Link
+          href={`/market/${market.address}`}
+          className="flex gap-3 items-start mb-3"
+        >
+          <MarketThumb
+            address={market.address}
+            question={market.question}
+            category={category}
+          />
+          <div className="text-[13px] leading-snug text-foreground min-h-9 line-clamp-3 group-hover:text-white transition-colors">
+            {market.question}
+          </div>
+        </Link>
+
+        {/* ─── Odds + trend ─── */}
+        <div className="flex items-end justify-between gap-3 mb-3">
+          <div className="leading-none">
+            <div className="font-mono-nums text-2xl text-yes">
+              {yesPercent}%
+            </div>
+            <div className="text-[9px] text-muted mt-1">chance yes</div>
+          </div>
+          <div className="flex-1 max-w-28">
+            <Sparkline
+              marketAddress={market.address}
+              currentYesPercent={yesPercent}
+            />
+          </div>
+        </div>
+
+        {/* ─── Yes / No ─── */}
         {market.resolved ? (
-          <div className="font-mono-nums text-center py-1.5 text-[10px] text-yes bg-yes-bg border border-yes/20 rounded-lg">
+          <div
+            className={`font-mono-nums text-center py-2 text-[11px] rounded-lg border ${
+              market.outcome
+                ? "bg-yes-bg border-yes/25 text-yes"
+                : "bg-no-bg border-no/25 text-no"
+            }`}
+          >
             {market.outcome ? "YES WON" : "NO WON"}
+          </div>
+        ) : ended ? (
+          <div className="font-mono-nums text-center py-2 text-[10px] uppercase tracking-wide rounded-lg border border-border-strong text-muted">
+            Awaiting resolution
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-1.5">
-            <div className="text-center py-1.5 text-[10px] rounded-lg bg-yes-bg border border-yes/25 text-yes">
-              {yesPercent}¢
-            </div>
-            <div className="text-center py-1.5 text-[10px] rounded-lg border border-border-strong text-no">
-              {noPercent}¢
-            </div>
+            <Link
+              href={`/market/${market.address}?side=yes`}
+              className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-yes-bg border border-yes/25 text-yes text-[11px] font-medium hover:bg-yes hover:border-yes hover:text-white transition-colors"
+            >
+              Yes <span className="font-mono-nums">{yesPercent}¢</span>
+            </Link>
+            <Link
+              href={`/market/${market.address}?side=no`}
+              className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-no-bg border border-no/25 text-no text-[11px] font-medium hover:bg-no hover:border-no hover:text-white transition-colors"
+            >
+              No <span className="font-mono-nums">{noPercent}¢</span>
+            </Link>
           </div>
         )}
 
-        <div className="mt-auto pt-2.5 font-mono-nums text-[9px] text-muted">
-          {market.resolved
-            ? "SETTLED"
-            : ended
-            ? "AWAITING RESOLUTION"
-            : `ENDS ${formatEndTime(market.endTime).toUpperCase()}`}
+        {/* ─── Footer: volume + creator ─── */}
+        <div className="mt-auto pt-3 flex items-center justify-between font-mono-nums text-[9px] text-muted">
+          <span>{formatCompactVolume(volume)} AVAX VOL.</span>
+          <span className="truncate max-w-28" title={market.creator}>
+            {shortAddress(market.creator)}
+          </span>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

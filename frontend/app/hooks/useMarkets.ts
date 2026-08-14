@@ -11,6 +11,7 @@ export interface MarketData {
   outcome: boolean;
   totalYes: bigint;
   totalNo: bigint;
+  creator?: `0x${string}`;
 }
 
 export function useMarkets() {
@@ -33,7 +34,17 @@ export function useMarkets() {
     query: { enabled: marketAddresses.length > 0 },
   });
 
-  // Step 3: combine addresses + their info into clean objects
+  // Step 3: the creator, shown on each market card, lives on the market itself
+  const { data: owners } = useReadContracts({
+    contracts: marketAddresses.map((addr) => ({
+      address: addr,
+      abi: MARKET_ABI,
+      functionName: "owner",
+    })),
+    query: { enabled: marketAddresses.length > 0 },
+  });
+
+  // Step 4: combine addresses + their info into clean objects
   const markets: MarketData[] = marketAddresses.map((addr, i) => {
     const info = marketInfos?.[i]?.result as
       | [string, bigint, boolean, boolean, bigint, bigint]
@@ -47,6 +58,7 @@ export function useMarkets() {
       outcome: info?.[3] ?? false,
       totalYes: info?.[4] ?? 0n,
       totalNo: info?.[5] ?? 0n,
+      creator: owners?.[i]?.result as `0x${string}` | undefined,
     };
   });
 
