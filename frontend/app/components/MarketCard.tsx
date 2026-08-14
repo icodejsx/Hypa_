@@ -35,23 +35,23 @@ export function MarketCard({ market }: { market: MarketData }) {
         h-full flex flex-col overflow-hidden
         transition-all duration-200
         hover:border-border-strong hover:bg-surface-hover
-        hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/40
-        ${market.resolved ? "opacity-70" : ""}
+        hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/50
+        ${market.resolved ? "opacity-70 hover:opacity-100" : ""}
       `}
     >
       {/* Probability bar pinned to the top edge, so the odds read at a glance */}
-      <div className="absolute inset-x-0 top-0 h-0.5 bg-no/25">
+      <div className="absolute inset-x-0 top-0 h-0.5 bg-no/30">
         <div
           className="h-full bg-yes transition-all duration-500"
           style={{ width: `${yesPercent}%` }}
         />
       </div>
 
-      <div className="p-4 flex flex-col h-full">
+      <div className="p-4 pt-4.5 flex flex-col h-full">
         {/* ─── Meta row: topic, status, deadline ─── */}
         <div className="flex items-center gap-2 mb-3">
           <span
-            className={`text-[9px] font-medium tracking-wide uppercase px-1.5 py-0.5 rounded border ${CATEGORY_STYLES[category]}`}
+            className={`text-[9px] font-semibold tracking-wide uppercase px-1.5 py-0.5 rounded border ${CATEGORY_STYLES[category]}`}
           >
             {category}
           </span>
@@ -80,14 +80,16 @@ export function MarketCard({ market }: { market: MarketData }) {
         {/* ─── Thumbnail + question ─── */}
         <Link
           href={`/market/${market.address}`}
-          className="flex gap-3 items-start mb-3"
+          className="flex gap-3 items-start mb-3.5 rounded-lg focus-ring"
         >
-          <MarketThumb
-            address={market.address}
-            question={market.question}
-            category={category}
-          />
-          <div className="text-[13px] leading-snug text-foreground min-h-9 line-clamp-3 group-hover:text-white transition-colors">
+          <div className="transition-transform duration-200 group-hover:scale-105">
+            <MarketThumb
+              address={market.address}
+              question={market.question}
+              category={category}
+            />
+          </div>
+          <div className="text-[13px] font-medium leading-snug text-foreground/90 min-h-9 line-clamp-3 group-hover:text-white transition-colors">
             {market.question}
           </div>
         </Link>
@@ -95,12 +97,14 @@ export function MarketCard({ market }: { market: MarketData }) {
         {/* ─── Odds + trend ─── */}
         <div className="flex items-end justify-between gap-3 mb-3">
           <div className="leading-none">
-            <div className="font-mono-nums text-2xl text-yes">
+            <div className="font-mono-nums text-2xl font-semibold text-yes tracking-tight">
               {yesPercent}%
             </div>
-            <div className="text-[9px] text-muted mt-1">chance yes</div>
+            <div className="text-[9px] text-muted mt-1.5 uppercase tracking-wide">
+              chance yes
+            </div>
           </div>
-          <div className="flex-1 max-w-28">
+          <div className="flex-1 max-w-28 opacity-70 group-hover:opacity-100 transition-opacity">
             <Sparkline
               marketAddress={market.address}
               currentYesPercent={yesPercent}
@@ -127,13 +131,15 @@ export function MarketCard({ market }: { market: MarketData }) {
           <div className="grid grid-cols-2 gap-1.5">
             <Link
               href={`/market/${market.address}?side=yes`}
-              className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-yes-bg border border-yes/25 text-yes text-[11px] font-medium hover:bg-yes hover:border-yes hover:text-white transition-colors"
+              aria-label={`Buy yes at ${yesPercent} cents`}
+              className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-yes-bg border border-yes/25 text-yes text-[11px] font-semibold hover:bg-yes hover:border-yes hover:text-white active:scale-[0.98] transition-all focus-ring"
             >
               Yes <span className="font-mono-nums">{yesPercent}¢</span>
             </Link>
             <Link
               href={`/market/${market.address}?side=no`}
-              className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-no-bg border border-no/25 text-no text-[11px] font-medium hover:bg-no hover:border-no hover:text-white transition-colors"
+              aria-label={`Buy no at ${noPercent} cents`}
+              className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-no-bg border border-no/25 text-no text-[11px] font-semibold hover:bg-no hover:border-no hover:text-white active:scale-[0.98] transition-all focus-ring"
             >
               No <span className="font-mono-nums">{noPercent}¢</span>
             </Link>
@@ -143,7 +149,10 @@ export function MarketCard({ market }: { market: MarketData }) {
         {/* ─── Footer: volume + creator ─── */}
         <div className="mt-auto pt-3 flex items-center justify-between font-mono-nums text-[9px] text-muted">
           <span>{formatCompactVolume(volume)} AVAX VOL.</span>
-          <span className="truncate max-w-28" title={market.creator}>
+          <span
+            className="truncate max-w-28 hover:text-dim transition-colors"
+            title={market.creator}
+          >
             {shortAddress(market.creator)}
           </span>
         </div>

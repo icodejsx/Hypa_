@@ -6,6 +6,7 @@ import { formatEther } from "viem";
 export function Ticker({ markets }: { markets: MarketData[] }) {
   let totalVolume = 0n;
   let liveCount = 0;
+  // eslint-disable-next-line react-hooks/purity
   const nowSec = BigInt(Math.floor(Date.now() / 1000));
 
   for (const m of markets) {

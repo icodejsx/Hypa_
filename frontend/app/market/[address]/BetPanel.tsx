@@ -1,11 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
-import { parseEther, formatEther } from "viem";
+import {
+  useAccount,
+  useReadContract,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from "wagmi";
+import { formatEther, parseEther } from "viem";
 import { ConnectWallet } from "@/app/components/ConnectWallet";
 import { MARKET_ABI } from "@/app/config/contracts";
+
+const PRESETS = ["0.10", "0.50", "1.00"];
 
 export function BetPanel({
   marketAddress,
@@ -25,17 +32,18 @@ export function BetPanel({
   onBetPlaced: () => void;
 }) {
   const { isConnected, address } = useAccount();
-  // Market cards link here with ?side=yes|no so the pick carries over from the grid
   const searchParams = useSearchParams();
   const [side, setSide] = useState<"yes" | "no">(
     searchParams.get("side") === "no" ? "no" : "yes"
   );
   const [amount, setAmount] = useState("0.10");
+  const [validationError, setValidationError] = useState("");
+  const handledHash = useRef<`0x${string}` | undefined>(undefined);
 
   const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  const { isLoading: isConfirming, isSuccess } =
+    useWaitForTransactionReceipt({ hash });
 
-  // Read user's existing position
   const { data: userBets } = useReadContract({
     address: marketAddress,
     abi: MARKET_ABI,
@@ -44,32 +52,40 @@ export function BetPanel({
     query: { enabled: !!address },
   });
 
+  useEffect(() => {
+    if (!isSuccess || !hash || handledHash.current === hash) return;
+    handledHash.current = hash;
+    onBetPlaced();
+  }, [hash, isSuccess, onBetPlaced]);
+
   const bets = userBets as [bigint, bigint, boolean] | undefined;
   const yesBet = bets?.[0] ?? 0n;
   const noBet = bets?.[1] ?? 0n;
-
-  if (isSuccess) onBetPlaced();
-
   const noPercent = 100 - yesPercent;
+  const numericAmount = Number(amount);
+  const amountIsValid =
+    /^\d+(\.\d{0,18})?$/.test(amount) &&
+    Number.isFinite(numericAmount) &&
+    numericAmount > 0;
 
-  // Payout math: your stake + your share of the losing pool, minus 2% fee
   function calcPayout(): string {
-    const amt = Number(amount);
-    if (!amt || amt <= 0) return "0.00";
+    if (!amountIsValid) return "0.000";
 
     const yes = Number(formatEther(totalYes));
     const no = Number(formatEther(totalNo));
-
-    const winPool = side === "yes" ? yes + amt : no + amt;
+    const winPool = side === "yes" ? yes + numericAmount : no + numericAmount;
     const losePool = side === "yes" ? no : yes;
-
-    const gross = amt + (amt / winPool) * losePool;
-    const payout = gross * 0.98;
-    return payout.toFixed(3);
+    const gross = numericAmount + (numericAmount / winPool) * losePool;
+    return (gross * 0.98).toFixed(3);
   }
 
   function placeBet() {
-    if (!amount || Number(amount) <= 0) return;
+    if (!amountIsValid) {
+      setValidationError("Enter a valid AVAX amount greater than zero.");
+      return;
+    }
+
+    setValidationError("");
     writeContract({
       address: marketAddress,
       abi: MARKET_ABI,
@@ -78,130 +94,191 @@ export function BetPanel({
     });
   }
 
-  const positionText =
-    yesBet > 0n
-      ? `${Number(formatEther(yesBet)).toFixed(2)} YES`
-      : noBet > 0n
-      ? `${Number(formatEther(noBet)).toFixed(2)} NO`
-      : "NONE";
+  const busy = isPending || isConfirming;
+  const errorMessage =
+    error && "shortMessage" in error
+      ? String(error.shortMessage)
+      : error?.message.slice(0, 120);
 
   return (
-    <div className="p-5">
-      <div className="font-mono-nums text-[11px] tracking-wider text-muted mb-3">
-        PLACE BET
-      </div>
-
-      {/* YES / NO */}
-      <div className="grid grid-cols-2 gap-1.5 mb-3.5">
-        <button
-          onClick={() => setSide("yes")}
-          disabled={resolved || ended}
-          className={`py-3 grid gap-0.5 justify-items-center rounded-lg transition-colors ${
-            side === "yes"
-              ? "bg-yes-bg border border-yes/50"
-              : "border border-border-subtle hover:border-border-strong"
-          } disabled:opacity-40`}
-        >
-          <span className="font-mono-nums text-[10px] text-yes">YES</span>
-          <span className={`font-mono-nums text-[17px] ${side === "yes" ? "text-yes" : "text-dim"}`}>
-            {yesPercent}¢
+    <section className="rounded-xl border border-border-subtle bg-surface overflow-hidden">
+      <div className="p-5 border-b border-border-subtle">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-sm font-medium">Trade this market</h2>
+            <p className="text-[11px] text-muted mt-1">
+              Choose an outcome and enter your stake
+            </p>
+          </div>
+          <span className="font-mono-nums text-[9px] text-muted px-2 py-1 rounded-full border border-border-strong">
+            2% FEE
           </span>
-        </button>
-        <button
-          onClick={() => setSide("no")}
-          disabled={resolved || ended}
-          className={`py-3 grid gap-0.5 justify-items-center rounded-lg transition-colors ${
-            side === "no"
-              ? "bg-no-bg border border-no/50"
-              : "border border-border-subtle hover:border-border-strong"
-          } disabled:opacity-40`}
-        >
-          <span className="font-mono-nums text-[10px] text-no">NO</span>
-          <span className={`font-mono-nums text-[17px] ${side === "no" ? "text-no" : "text-dim"}`}>
-            {noPercent}¢
-          </span>
-        </button>
-      </div>
-
-      {/* Amount */}
-      <div className="font-mono-nums text-[10px] text-muted mb-1.5">
-        AMOUNT · AVAX
-      </div>
-      <input
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-        disabled={resolved || ended}
-        className="w-full bg-background border border-border-strong rounded-lg px-3 py-2.5 font-mono-nums text-sm focus:outline-none focus:border-muted transition-colors mb-3.5 disabled:opacity-40"
-      />
-
-      {/* Payout preview */}
-      <div className="flex justify-between text-[11px] py-2.5 border-y border-border-subtle mb-3.5">
-        <span className="text-muted">Payout if {side}</span>
-        <span className={`font-mono-nums ${side === "yes" ? "text-yes" : "text-no"}`}>
-          {calcPayout()} AVAX
-        </span>
-      </div>
-
-      {/* Action */}
-      {resolved ? (
-        <div className="text-center py-3 text-xs text-muted border border-border-subtle rounded-lg">
-          Market resolved
         </div>
-      ) : ended ? (
-        <div className="text-center py-3 text-xs text-muted border border-border-subtle rounded-lg">
-          Betting closed
-        </div>
-      ) : !isConnected ? (
-        <ConnectWallet />
-      ) : (
-        <button
-          onClick={placeBet}
-          disabled={isPending || isConfirming}
-          className={`w-full py-3 rounded-lg text-[13px] font-medium transition-colors ${
-            side === "yes"
-              ? "bg-yes hover:bg-yes/90"
-              : "bg-no hover:bg-no/90"
-          } text-white disabled:opacity-50`}
-        >
-          {isPending
-            ? "Confirm in wallet…"
-            : isConfirming
-            ? "Placing bet…"
-            : `Buy ${side}`}
-        </button>
-      )}
 
-      {isSuccess && (
-        <div className="text-center text-[11px] text-yes mt-2.5">Bet placed</div>
-      )}
-      {error && (
-        <div className="text-[10px] text-no mt-2.5 break-words">
-          {error.message.slice(0, 80)}
-        </div>
-      )}
-
-      {/* Meta */}
-      <div className="mt-5 pt-3.5 border-t border-border-subtle grid gap-2">
-        <div className="flex justify-between text-[11px]">
-          <span className="text-muted">Your position</span>
-          <span className="font-mono-nums text-dim">{positionText}</span>
-        </div>
-        <div className="flex justify-between text-[11px]">
-          <span className="text-muted">Platform fee</span>
-          <span className="font-mono-nums text-dim">2%</span>
-        </div>
-      <div className="flex justify-between text-[11px]">
-          <span className="text-muted">Contract</span>
-          <a
-            href={"https://testnet.snowtrace.io/address/" + marketAddress}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-mono-nums text-avax hover:underline"
+        <div className="grid grid-cols-2 gap-2 mb-4" role="group" aria-label="Outcome">
+          <button
+            type="button"
+            onClick={() => setSide("yes")}
+            disabled={resolved || ended}
+            aria-pressed={side === "yes"}
+            className={`py-3.5 grid gap-1 justify-items-center rounded-lg border transition-all focus-ring ${
+              side === "yes"
+                ? "bg-yes-bg border-yes/60 shadow-[inset_0_0_20px_rgba(29,158,117,0.06)]"
+                : "border-border-strong hover:border-yes/40"
+            } disabled:opacity-40`}
           >
-            {marketAddress.slice(0, 6)}…{marketAddress.slice(-3)} ↗
-          </a>
+            <span className="text-[10px] font-semibold text-yes">YES</span>
+            <span className="font-mono-nums text-xl text-yes">
+              {yesPercent}¢
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setSide("no")}
+            disabled={resolved || ended}
+            aria-pressed={side === "no"}
+            className={`py-3.5 grid gap-1 justify-items-center rounded-lg border transition-all focus-ring ${
+              side === "no"
+                ? "bg-no-bg border-no/60 shadow-[inset_0_0_20px_rgba(226,75,74,0.06)]"
+                : "border-border-strong hover:border-no/40"
+            } disabled:opacity-40`}
+          >
+            <span className="text-[10px] font-semibold text-no">NO</span>
+            <span className="font-mono-nums text-xl text-no">{noPercent}¢</span>
+          </button>
+        </div>
+
+        <label
+          htmlFor="bet-amount"
+          className="flex items-center justify-between text-[10px] text-muted mb-2"
+        >
+          <span className="font-mono-nums">AMOUNT</span>
+          <span>AVAX</span>
+        </label>
+        <div className="relative mb-2">
+          <input
+            id="bet-amount"
+            type="text"
+            inputMode="decimal"
+            autoComplete="off"
+            value={amount}
+            onChange={(event) => {
+              setAmount(event.target.value);
+              setValidationError("");
+            }}
+            disabled={resolved || ended}
+            aria-invalid={!!validationError}
+            className="w-full bg-background border border-border-strong rounded-lg pl-3.5 pr-16 py-3 font-mono-nums text-base focus:outline-none focus:border-muted transition-colors disabled:opacity-40"
+          />
+          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-mono-nums text-muted">
+            AVAX
+          </span>
+        </div>
+
+        <div className="flex gap-1.5 mb-4">
+          {PRESETS.map((preset) => (
+            <button
+              key={preset}
+              type="button"
+              onClick={() => {
+                setAmount(preset);
+                setValidationError("");
+              }}
+              disabled={resolved || ended}
+              className="flex-1 py-1.5 rounded-md border border-border-subtle text-[10px] font-mono-nums text-muted hover:text-foreground hover:border-border-strong transition-colors focus-ring disabled:opacity-40"
+            >
+              {preset}
+            </button>
+          ))}
+        </div>
+
+        <div className="rounded-lg bg-background/70 border border-border-subtle p-3 mb-4 space-y-2">
+          <div className="flex justify-between text-[11px]">
+            <span className="text-muted">Estimated return</span>
+            <span className={side === "yes" ? "text-yes" : "text-no"}>
+              <span className="font-mono-nums">{calcPayout()}</span> AVAX
+            </span>
+          </div>
+          <div className="flex justify-between text-[11px]">
+            <span className="text-muted">Potential profit</span>
+            <span className="font-mono-nums text-dim">
+              {amountIsValid
+                ? `${Math.max(0, Number(calcPayout()) - numericAmount).toFixed(3)} AVAX`
+                : "0.000 AVAX"}
+            </span>
+          </div>
+        </div>
+
+        {resolved ? (
+          <div className="text-center py-3 text-xs text-muted border border-border-subtle rounded-lg">
+            This market has been resolved
+          </div>
+        ) : ended ? (
+          <div className="text-center py-3 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+            Betting closed · awaiting resolution
+          </div>
+        ) : !isConnected ? (
+          <ConnectWallet />
+        ) : (
+          <button
+            type="button"
+            onClick={placeBet}
+            disabled={busy || !amountIsValid}
+            className={`w-full py-3 rounded-lg text-[13px] font-semibold transition-all focus-ring active:scale-[0.99] ${
+              side === "yes"
+                ? "bg-yes hover:bg-yes/90"
+                : "bg-no hover:bg-no/90"
+            } text-white disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            {isPending
+              ? "Confirm in wallet…"
+              : isConfirming
+              ? "Confirming on Avalanche…"
+              : `Buy ${side.toUpperCase()} · ${amount || "0"} AVAX`}
+          </button>
+        )}
+
+        <div aria-live="polite">
+          {isSuccess && (
+            <div className="text-center text-[11px] text-yes mt-3">
+              Trade confirmed on-chain
+            </div>
+          )}
+          {(validationError || errorMessage) && (
+            <div className="text-[11px] text-no mt-3 wrap-break-word">
+              {validationError || errorMessage}
+            </div>
+          )}
         </div>
       </div>
-    </div>
+
+      <div className="p-5">
+        <div className="font-mono-nums text-[10px] tracking-wider text-muted mb-3">
+          YOUR POSITION
+        </div>
+        {!isConnected ? (
+          <p className="text-[11px] text-muted">
+            Connect a wallet to view your positions.
+          </p>
+        ) : yesBet === 0n && noBet === 0n ? (
+          <p className="text-[11px] text-muted">No position in this market yet.</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-lg bg-yes-bg border border-yes/20 p-3">
+              <div className="text-[9px] text-yes mb-1">YES STAKE</div>
+              <div className="font-mono-nums text-sm text-foreground">
+                {Number(formatEther(yesBet)).toFixed(3)}
+              </div>
+            </div>
+            <div className="rounded-lg bg-no-bg border border-no/20 p-3">
+              <div className="text-[9px] text-no mb-1">NO STAKE</div>
+              <div className="font-mono-nums text-sm text-foreground">
+                {Number(formatEther(noBet)).toFixed(3)}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }

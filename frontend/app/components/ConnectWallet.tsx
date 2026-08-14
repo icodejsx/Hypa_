@@ -27,7 +27,7 @@ export function ConnectWallet() {
 
   const hasInjected =
     typeof window !== "undefined" &&
-    typeof (window as any).ethereum !== "undefined";
+    typeof (window as Window & { ethereum?: unknown }).ethereum !== "undefined";
 
     function handleClick() {
         // Desktop with extension → show picker

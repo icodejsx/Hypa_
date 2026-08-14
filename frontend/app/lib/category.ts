@@ -28,7 +28,7 @@ export function inferCategory(question: string): Category {
     return "Crypto";
   }
   if (
-    /\b(election|president|presidential|vote|voter|senate|congress|policy|minister|parliament|party|governor|campaign|impeach)\b/.test(
+    /\b(elections?|midterms?|democrats?|republicans?|president|presidential|vote|voter|senate|congress|policy|law|legislation|minister|parliament|party|governor|campaign|impeach)\b/.test(
       q
     )
   ) {
@@ -42,21 +42,21 @@ export function inferCategory(question: string): Category {
     return "Sports";
   }
   if (
-    /\b(ai|gpt|openai|apple|google|samsung|tesla|iphone|launch|chip|software|model|robot|spacex|starship)\b/.test(
+    /\b(ai|gpt|openai|anthropic|claude|apple|google|samsung|tesla|iphone|launch|chip|software|model|robot|robotaxi|spacex|starship)\b/.test(
       q
     )
   ) {
     return "Technology";
   }
   if (
-    /\b(movie|film|album|song|grammy|oscar|netflix|bbnaija|reality|celebrity|tour|box office|series)\b/.test(
+    /\b(movie|film|album|song|grammy|oscar|netflix|disney|avatar|bbnaija|reality|celebrity|tour|box office|series|gta|rockstar|gaming)\b/.test(
       q
     )
   ) {
     return "Pop Culture";
   }
   if (
-    /\b(stock|stocks|shares|revenue|refinery|valued|valuation|ipo|inflation|rate|rates|gdp|earnings|nasdaq|fed)\b/.test(
+    /\b(stock|stocks|shares|index|s&p|gold|revenue|refinery|valued|valuation|ipo|inflation|rate|rates|gdp|earnings|nasdaq|fed|bank of england)\b/.test(
       q
     ) ||
     /\$\d/.test(q)

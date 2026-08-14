@@ -15,8 +15,13 @@ export function Sparkline({
   const data = points.map((p) => ({ yes: p.yes }));
   data.push({ yes: currentYesPercent });
 
+  // A single point has no trend to draw; a flat baseline reads better than a gap
   if (isLoading || data.length <= 1) {
-    return <div className="h-8 w-full" />;
+    return (
+      <div className="h-8 w-full flex items-center" aria-hidden>
+        <div className="h-px w-full bg-border-strong" />
+      </div>
+    );
   }
 
   return (

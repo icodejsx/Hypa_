@@ -10,6 +10,7 @@ export function MarketRow({ market }: { market: MarketData }) {
   const noPercent = 100 - yesPercent;
   const volume = getVolume(market.totalYes, market.totalNo);
 
+  // eslint-disable-next-line react-hooks/purity
   const nowSec = BigInt(Math.floor(Date.now() / 1000));
   const ended = market.endTime <= nowSec;
 
