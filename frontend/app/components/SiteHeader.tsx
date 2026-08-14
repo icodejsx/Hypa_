@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useIsAdmin } from "@/app/hooks/useIsAdmin";
 import { ConnectWallet } from "./ConnectWallet";
+import { Logo } from "./Logo";
 
 /**
  * Shared across every page so the chrome stays identical while navigating.
@@ -19,15 +20,7 @@ export function SiteHeader({ breadcrumb }: { breadcrumb?: ReactNode }) {
     <header className="sticky top-0 z-30 border-b border-border-subtle bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
         <div className="flex items-center gap-6 min-w-0">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-base font-semibold tracking-tight shrink-0 rounded-md focus-ring"
-          >
-            <span className="grid place-items-center w-6 h-6 rounded-md bg-avax text-white text-[11px] font-bold">
-              H
-            </span>
-            Hy<span className="text-avax -ml-1.5">pa</span>
-          </Link>
+          <Logo className="shrink-0" />
 
           {breadcrumb ?? (
             <nav className="hidden sm:flex items-center gap-1">

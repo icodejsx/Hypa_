@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FACTORY_ADDRESS } from "@/app/config/contracts";
 import { CATEGORIES } from "@/app/lib/category";
+import { Logo } from "./Logo";
 
 const SNOWTRACE = "https://testnet.snowtrace.io";
 const REPO = "https://github.com/icodejsx/Hypa_";
@@ -47,15 +48,7 @@ export function SiteFooter() {
       <div className="max-w-6xl mx-auto px-6 py-12">
         <div className="grid grid-cols-2 gap-x-8 gap-y-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div className="col-span-2 md:col-span-1">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-base font-semibold tracking-tight rounded-md focus-ring"
-            >
-              <span className="grid place-items-center w-6 h-6 rounded-md bg-avax text-white text-[11px] font-bold">
-                H
-              </span>
-              Hy<span className="text-avax -ml-1.5">pa</span>
-            </Link>
+            <Logo markHeight={34} />
 
             <p className="mt-3 text-xs leading-relaxed text-muted max-w-xs">
               Prediction markets, settled on-chain. Built natively for
